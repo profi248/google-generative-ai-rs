@@ -58,6 +58,7 @@ pub struct Client {
     pub region: Option<String>,
     pub project_id: Option<String>,
     pub response_type: ResponseType,
+    pub oauth_key: Option<String>,
 }
 
 /// Implements the functions for the API client.
@@ -73,6 +74,7 @@ impl Client {
             region: None,
             project_id: None,
             response_type: ResponseType::GenerateContent,
+            oauth_key: None,
         }
     }
 
@@ -85,11 +87,12 @@ impl Client {
             region: None,
             project_id: None,
             response_type,
+            oauth_key: None,
         }
     }
 
     /// Create a new public API client for a specified model.
-    pub fn new_from_model(model: Model, api_key: String) -> Self {
+    pub fn new_from_model(model: Model, api_key: String, oauth_key: Option<String>) -> Self {
         let url = Url::new(&model, api_key, &ResponseType::GenerateContent);
         Self {
             url: url.url,
@@ -97,6 +100,7 @@ impl Client {
             region: None,
             project_id: None,
             response_type: ResponseType::GenerateContent,
+            oauth_key: oauth_key,
         }
     }
 
@@ -113,6 +117,7 @@ impl Client {
             region: None,
             project_id: None,
             response_type,
+            oauth_key: None,
         }
     }
 
@@ -432,20 +437,27 @@ impl Client {
 pub(crate) struct Url {
     pub url: String,
 }
+
 impl Url {
     pub(crate) fn new(model: &Model, api_key: String, response_type: &ResponseType) -> Self {
         let base_url = PUBLIC_API_URL_BASE.to_owned();
+
+        let model_url_path = match model {
+            Model::Finetuned(_) => "tunedModels",
+            _ => "models"
+        };
+
         match response_type {
             ResponseType::GenerateContent => Self {
                 url: format!(
-                    "{}/models/{}:{}?key={}",
-                    base_url, model, response_type, api_key
+                    "{}/{}/{}:{}?key={}",
+                    base_url, model_url_path, model, response_type, api_key
                 ),
             },
             ResponseType::StreamGenerateContent => Self {
                 url: format!(
-                    "{}/models/{}:{}?key={}",
-                    base_url, model, response_type, api_key
+                    "{}/{}/{}:{}?key={}",
+                    base_url, model_url_path, model, response_type, api_key
                 ),
             },
             ResponseType::GetModel => Self {
@@ -456,8 +468,8 @@ impl Url {
             },
             ResponseType::CountTokens => Self {
                 url: format!(
-                    "{}/models/{}:{}?key={}",
-                    base_url, model, response_type, api_key
+                    "{}/{}/{}:{}?key={}",
+                    base_url, model_url_path, model, response_type, api_key
                 ),
             },
             _ => panic!("Unsupported response type: {:?}", response_type),

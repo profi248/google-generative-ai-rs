@@ -41,6 +41,7 @@ impl Client {
             region: Some(region),
             project_id: Some(project_id),
             response_type,
+            oauth_key: None,
         }
     }
     /// Create a new private API client.
@@ -65,11 +66,17 @@ impl Client {
             region: Some(region),
             project_id: Some(project_id),
             response_type: ResponseType::StreamGenerateContent,
+            oauth_key: None,
         }
     }
 
     /// If this is a Vertex AI request, get the token from the GCP authn library, if it is correctly configured, else None.
     pub(crate) async fn get_auth_token_option(&self) -> Result<Option<String>, GoogleAPIError> {
+
+        if let Some(oauth_key) = self.oauth_key.clone() {
+            return Ok(Some(oauth_key));
+        }
+
         let token_option = if self.project_id.is_some() && self.region.is_some() {
             let token = self.get_gcp_authn_token().await?.as_str().to_string();
             Some(token)

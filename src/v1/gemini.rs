@@ -81,13 +81,15 @@ pub enum Model {
     #[cfg_attr(docsrs, doc(cfg(feature = "beta")))]
     Gemini1_5Pro,
     GeminiProVision,
+    Finetuned(String),
     // TODO Embedding001
 }
 impl fmt::Display for Model {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Model::GeminiPro => write!(f, "gemini-pro"),
-
+            Model::Finetuned(s) => write!(f, "{}", s),
+            
             #[cfg(feature = "beta")]
             Model::Gemini1_5Pro => write!(f, "gemini-1.5-pro-latest"),
 
